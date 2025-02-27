@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appcrud</title>        
+
+    <script src="https://kit.fontawesome.com/6dd475346c.js" crossorigin="anonymous"></script>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">    
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>                
+    
+        function guardar(){
+            document.getElementById('fecha_prestamo').disabled = false;
+            msjError="";
+            if(document.getElementById('id_usuario').value == ''){
+                msjError = msjError+'Debe seleccionar un usuario\n';
+            }
+            if(document.getElementById('id_libro').value == ''){
+                msjError = msjError+'Debe seleccionar un libro\n';
+            }
+            if(msjError != ''){
+                msjError = 'Para continuar, corrija los siguientes errores:\n'+msjError;
+                alert(msjError);
+                return;
+            }
+            var form = document.getElementById('formulario');            
+            form.submit();
+        }
+
+        function guardarDevolucion(){            
+            document.getElementById('fecha_devolucionE').disabled = false;            
+            var form = document.getElementById('formularioDevolucion');            
+            form.submit();
+        }
+
+    function devolucion(id_prestamo) {        
+        var prestamo = prestamosjs.find(prestamo => prestamo.id_prestamo == id_prestamo);
+        
+        document.getElementById('id_prestamoE').value = prestamo.id_prestamo;
+        document.getElementById('id_usuarioE').value = prestamo.id_usuario;
+        document.getElementById('id_libroE').value = prestamo.id_libro;
+        document.getElementById('fecha_prestamoE').value = prestamo.fecha_prestamo;        
+        document.getElementById('observacionE').value = prestamo.observacion;        
+        
+    }
+    </script>
+
+</head>
+<body>
+    <header>        
+        {% include 'encabezado.html' %}
+    </header>
+    
+    <div class="bg-secondary text-white p-3">    
+        <h4>Listado de Préstamos</h4>
+    </div>
+    
+    <nav>
+        <div class="container-fluid">                        
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalPrestamo">
+                <i class="fa-solid fa-circle-plus"></i>
+                Crear Nuevo Préstamo
+            </button>
+        </div>        
+    </nav>    
+    
+    <main>        
+        <br>
+        <div class="table-responsive">
+            <table class="table">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="verde">ID</th>
+                        <th>NOMBRE</th>
+                        <th>LIBRO</th>
+                        <th>FECHA DE PRESTAMO</th>
+                        <th>FECHA DE DEVOLUCION</th>
+                        <th>OBSERVACION</th>
+                        <th>ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for prestamo in prestamos%}
+                    <tr>
+                        <td>{{prestamo.id_prestamo}}</td>             
+                        <td>{{prestamo.nombres}} {{prestamo.apellidos}}</td>
+                        <td>{{prestamo.nombre_libro}} </td>                        
+                        <td>{{prestamo.fecha_prestamo}}</td>
+                        <td>{{prestamo.fecha_devolucion}}</td>
+                        <td>{{prestamo.observacion}}</td>
+                        <td>                            
+                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalDevolucion" onclick=devolucion({{prestamo.id_prestamo}}) title="Registrar devolución del libro">
+                                <i class="fa-solid fa-rotate-left"></i>
+                            </button>                            
+                        </td>
+                    </tr>
+                    {% endfor%}
+                </tbody>
+            </table>
+        </div>
+        
+                
+        <form method="post" action="{{ url_for('createprestamo') }}" id="formulario">
+            <!-- Modal -->
+            <div class="modal fade" id="modalPrestamo" tabindex="-1" aria-labelledby="modalPrestamoLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                        <h5 class="modal-title" id="modalPrestamoLabel">Nuevo Préstamo</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <label for="id_usuario">Usuario</label>
+                            <select name="id_usuario" id="id_usuario" class="form-control">
+                                <option value="">Seleccione un usuario</option>
+                                {% for usuario in usuarios %}
+                                <option value="{{usuario.id_usuario}}">{{usuario.nombres}} {{usuario.apellidos}}</option>
+                                {% endfor %}
+                            </select>
+                            <label for="id_libro">Libro</label>
+                            <select name="id_libro" id="id_libro" class="form-control">
+                                <option value="">Seleccione un libro</option>
+                                {% for libro in libros %}
+                                <option value="{{libro.id_libro}}">{{libro.nombre_libro}}</option>
+                                {% endfor %}
+                            </select>
+                            <label for="fecha_prestamo">Fecha</label>
+                            <input type="date" name="fecha_prestamo" id="fecha_prestamo" class="form-control" disabled>
+                            <script>
+                                var date = new Date().toISOString().substr(0, 10);
+                                document.getElementById("fecha_prestamo").value = date;
+                            </script>
+
+                            <label for="observacion">Observación</label>
+                            <input type="text" name="observacion" id="observacion" class="form-control" size="100" maxlength="100">
+
+                        </div>
+                        <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa-solid fa-rectangle-xmark"></i> Cerrar</button>
+                        <button type="button" class="btn btn-success" onclick="guardarDevolucion()"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <form method="post" action="{{ url_for('devolucion') }}" id="formularioDevolucion">
+            <!-- Modal -->
+            <div class="modal fade" id="modalDevolucion" tabindex="-1" aria-labelledby="modalDevolucion" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                        <h5 class="modal-title" id="modalPrestamoLabel">Registro de Devolución</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="id_prestamoE" id="id_prestamoE">
+                            <label for="id_usuarioE">Usuario</label>
+                            <select name="id_usuarioE" id="id_usuarioE" class="form-control" disabled>
+                                <option value="">Seleccione un usuario</option>
+                                {% for usuario in usuarios %}
+                                <option value="{{usuario.id_usuario}}">{{usuario.nombres}} {{usuario.apellidos}}</option>
+                                {% endfor %}
+                            </select>
+                            <label for="id_libroE">Libro</label>
+                            <select name="id_libroE" id="id_libroE" class="form-control" disabled>
+                                <option value="">Seleccione un libro</option>
+                                {% for libro in libros %}
+                                <option value="{{libro.id_libro}}">{{libro.nombre_libro}}</option>
+                                {% endfor %}
+                            </select>
+                            <label for="fecha_prestamoE">Fecha de préstamo</label>
+                            <input type="date" name="fecha_prestamoE" id="fecha_prestamoE" class="form-control" disabled>
+
+                            <label for="fecha_devolucionE">Fecha de devolucióm</label>
+                            <input type="date" name="fecha_devolucionE" id="fecha_devolucionE" class="form-control" disabled>
+
+                            <script>
+                                var date = new Date().toISOString().substr(0, 10);
+                                document.getElementById("fecha_devolucionE").value = date;
+                            </script>
+
+                            <label for="observacionE">Observación</label>
+                            <input type="text" name="observacionE" id="observacionE" class="form-control" size="100" maxlength="100">
+
+                        </div>
+                        <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa-solid fa-rectangle-xmark"></i> Cerrar</button>
+                        <button type="button" class="btn btn-success" onclick="guardarDevolucion()"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+
+    </main>
+    <footer>
+        <p>&copy; Un producto DELVINariño</p>
+    </footer>
+</body>
+</html>
+
+<script>
+    prestamosjs = [];
+    {% for prestamo in prestamos %}
+        prestamosjs.push({
+            id_prestamo: {{prestamo.id_prestamo}},
+            id_usuario: {{prestamo.id_usuario}},
+            id_libro: {{prestamo.id_libro}},
+            nombres: '{{prestamo.nombres}}',
+            apellidos: '{{prestamo.apellidos}}',
+            nombre_libro: '{{prestamo.nombre_libro}}',
+            fecha_prestamo: '{{prestamo.fecha_prestamo}}',
+            fecha_devolucion: '{{prestamo.fecha_devolucion}}',
+            observacion: '{{prestamo.observacion}}'
+        });
+    {% endfor %}
+</script>
+

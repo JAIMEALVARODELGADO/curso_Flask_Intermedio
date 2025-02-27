@@ -1,0 +1,34 @@
+<div class="contenedor">
+    <img src="../static/images/LogoLeerEsSaber.PNG" alt="Logo" width="150" height="150" class="img-fluid">
+    <h1>Biblioteca LEER ES SABER</h1>
+</div>        
+<nav class="container">
+    <ul class="menu">
+        <li><a href="{{ url_for('index')}}">Inicio</a></li>        
+        <li><a href="#">Registro</a>
+            <ul class="submenu">
+                <li><a href="{{ url_for('listaprestamos')}}">Prestamos</a></li>
+                <li><a href="{{ url_for('listausuarios')}}">Usuarios</a></li>
+                <li><a href="{{ url_for('listalibros')}}">Libros</a></li>                        
+                <li><a href="{{ url_for('listaeditoriales')}}">Editoriales</a></li>                    
+                <li><a href="{{ url_for('listageneros')}}">Géneros</a></li>
+            </ul>
+        </li>
+        <li><a href="#">Servicios</a>
+            <ul class="submenu">
+                <li><a href="#">Submenu 1</a></li>
+                <li><a href="#">Submenu 2</a></li>
+                <li><a href="#">Submenu 3</a>
+                    <ul class="submenu">
+                        <li><a href="#">Submenu 3.1</a></li>
+                        <li><a href="#">Submenu 3.2</a></li>
+                        <li><a href="#">Submenu 3.3</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><a href="#">Acerca de</a></li>
+        <li><a href="#">Contacto</a></li>
+        <li><a href="#" onclick="salir()">Salir</a></li>
+    </ul>
+</nav>
