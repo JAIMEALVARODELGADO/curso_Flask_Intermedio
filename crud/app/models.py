@@ -1,4 +1,8 @@
 from app import db
+from flask_wtf import FlaskForm
+from wtforms import StringField
+from wtforms.validators import DataRequired
+
 
 class Editorial(db.Model):
     __tablename__ = 'editorial'
@@ -18,6 +22,7 @@ class Genero(db.Model):
 
     def __repr__(self):
         return f'<Genero{self.nombre_genero}>'
+    
     
 class Libro(db.Model):
     __tablename__ = 'libro'
@@ -65,3 +70,6 @@ class Prestamo(db.Model):
 
     def __repr__(self):
         return f'<Prestamo{self.id_prestamo}>'
+    
+class AutocompleteForm(FlaskForm):
+    autocomplete_field = StringField('Autocomplete', validators=[DataRequired()])

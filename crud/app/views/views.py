@@ -1,12 +1,17 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, Response ,jsonify
+from datetime import datetime
 from app import app, db
 from app.models import Editorial
 from app.models import Genero
 from app.models import Libro
 from app.models import Usuario
 from app.models import Prestamo
+from sqlalchemy import and_
+from sqlalchemy import func
 
 import json
+import io
+import csv
 
 @app.route('/')
 def index():
@@ -244,4 +249,95 @@ def devolucion():
         return redirect(url_for('listaprestamos'))
 
 
-    return redirect(url_for('listaprestamos'))   
+    return redirect(url_for('listaprestamos'))
+
+@app.route('/infomePrestamos', methods=['GET','POST'])
+def informePrestamos():
+    if request.method == 'POST':
+        fecha_inicial = request.form['fecha_inicial']
+        fecha_final = request.form['fecha_final']
+        identificacion = request.form['identificacion']
+        nombre = request.form['nombre']
+        libro = request.form['libro']
+
+        condiciones = []
+        # Agregar condiciones opcionales
+        if fecha_inicial:
+            condiciones.append(Prestamo.fecha_prestamo >= fecha_inicial)
+        if fecha_final:
+            condiciones.append(Prestamo.fecha_prestamo <= fecha_final)
+        if identificacion:
+            condiciones.append(Usuario.numero_identificacion == identificacion)
+        if nombre:
+            condiciones.append(Usuario.nombres.ilike(f'%{nombre}%'))
+        if libro:
+            condiciones.append(Libro.nombre_libro.ilike(f'%{libro}%'))
+
+        # Realizar la consulta con las condiciones
+        prestamos = db.session.query(Prestamo).join(Usuario, Prestamo.id_usuario == Usuario.id_usuario).join(Libro, Prestamo.id_libro == Libro.id_libro).add_columns(
+            Prestamo.id_prestamo, Prestamo.id_usuario, Prestamo.id_libro, Prestamo.fecha_prestamo, Prestamo.fecha_devolucion, Prestamo.observacion,
+            Usuario.nombres, Usuario.apellidos, Libro.nombre_libro
+        ).filter(and_(*condiciones)).all()
+
+        
+    
+    #prestamos = db.session.query(Prestamo).join(Usuario, Prestamo.id_usuario == Usuario.id_usuario).join(Libro, Prestamo.id_libro == Libro.id_libro).add_columns(
+    #    Prestamo.id_prestamo, Prestamo.id_usuario, Prestamo.id_libro, Prestamo.fecha_prestamo, Prestamo.fecha_devolucion,Prestamo.observacion,
+    #    Usuario.nombres,Usuario.apellidos, Libro.nombre_libro
+    #).filter(Prestamo.fecha_devolucion!=None).all()
+
+    columns = ['id_prestamo','nombre', 'nombre del libro','fecha de prestamo', 'fecha de devolucion','dias','observacion']    
+    output = io.StringIO()
+    writer = csv.writer(output, quoting=csv.QUOTE_NONNUMERIC)
+
+    writer.writerow(columns)
+
+    for(prestamo) in prestamos:
+        fecha_prestamo = prestamo.fecha_prestamo
+        fecha_devolucion = prestamo.fecha_devolucion
+        dias = (fecha_devolucion - fecha_prestamo).days
+        writer.writerow([
+            prestamo.nombres+' '+prestamo.apellidos,
+            prestamo.nombre_libro,
+            prestamo.fecha_prestamo, 
+            prestamo.fecha_devolucion,            
+            dias,
+            prestamo.observacion])
+
+    output.seek(0)
+    csv_content = output.getvalue()
+
+    return Response(csv_content.encode('utf-8'), mimetype="text/csv", headers={"Content-Disposition": "attachment;filename=prestamos.csv"})
+           
+    
+@app.route('/parametrosPrestamos')
+def parametrosPrestamos():
+
+    return render_template('informes/informePrestamos.html')
+
+@app.route('/autocompleteUsuario')
+def autocompleteUsuario():
+    query = request.args.get('q', '').lower()
+    #breakpoint()
+    usuarios = Usuario.query.with_entities(
+    Usuario.id_usuario,
+    func.concat(Usuario.nombres, ' ', Usuario.apellidos).label('nombres')
+    ).filter(func.concat(Usuario.nombres, ' ', Usuario.apellidos).like(f'%{query}%')).all()
+
+    sugerencias = [
+        {"id": u.id_usuario, "nombres": u.nombres}
+        for u in usuarios
+    ]    
+    
+    return jsonify(sugerencias)
+    
+@app.route('/autocompleteLibro')
+def autocompleteLibro():
+    query = request.args.get('q', '').lower()
+
+    libros = Libro.query.with_entities(
+        Libro.id_libro,
+        Libro.nombre_libro).filter(Libro.nombre_libro.like(f'%{query}%')).all()
+    return jsonify([{"id": l.id_libro, "nombre_libro": l.nombre_libro} for l in libros])
+
+    

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Appcrud</title>        
+    <title>Appcrud</title>
 
     <script src="https://kit.fontawesome.com/6dd475346c.js" crossorigin="anonymous"></script>
     
@@ -11,8 +11,11 @@
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <script>                
+            
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
+
+    <script>
         function guardar(){
             document.getElementById('fecha_prestamo').disabled = false;
             msjError="";
@@ -113,21 +116,18 @@
                         <h5 class="modal-title" id="modalPrestamoLabel">Nuevo Préstamo</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <div class="modal-body">
-                            <label for="id_usuario">Usuario</label>
-                            <select name="id_usuario" id="id_usuario" class="form-control">
-                                <option value="">Seleccione un usuario</option>
-                                {% for usuario in usuarios %}
-                                <option value="{{usuario.id_usuario}}">{{usuario.nombres}} {{usuario.apellidos}}</option>
-                                {% endfor %}
-                            </select>
-                            <label for="id_libro">Libro</label>
-                            <select name="id_libro" id="id_libro" class="form-control">
-                                <option value="">Seleccione un libro</option>
-                                {% for libro in libros %}
-                                <option value="{{libro.id_libro}}">{{libro.nombre_libro}}</option>
-                                {% endfor %}
-                            </select>
+                        <div class="modal-body">                            
+                            <label for="nombre_usuario">Usuario</label>
+                            <input type="hidden" id="id_usuario" name="id_usuario" readonly><br>
+                            <input type="text" id="nombre_usuario" name="nombre_usuario" class="form-control" autocomplete="off" onkeyup="autocompleteUsuario()">
+                            <div id="sugerencias" class="autocomplete-suggestions"></div>
+                            
+
+                            <br><label for="nombre_libro">Libro</label>
+                            <input type="hidden" id="id_libro" name="id_libro" readonly><br>
+                            <input type="text" id="nombre_libro" name="nombre_libro" class="form-control" autocomplete="off" onkeyup="autocompleteLibro()">
+                            <div id="sugerenciasLibro" class="autocomplete-suggestions"></div>                            
+
                             <label for="fecha_prestamo">Fecha</label>
                             <input type="date" name="fecha_prestamo" id="fecha_prestamo" class="form-control" disabled>
                             <script>
@@ -141,7 +141,7 @@
                         </div>
                         <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa-solid fa-rectangle-xmark"></i> Cerrar</button>
-                        <button type="button" class="btn btn-success" onclick="guardarDevolucion()"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+                        <button type="button" class="btn btn-success" onclick="guardar()"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
                         </div>
                     </div>
                 </div>
@@ -221,4 +221,86 @@
         });
     {% endfor %}
 </script>
+
+<script>
+
+    function autocompleteUsuario(){        
+        const input = document.getElementById('nombre_usuario');
+        const sugerenciasDiv = document.getElementById('sugerencias');
+        const inputId = document.getElementById('id_usuario');
+
+        //input.addEventListener('input', function() {
+        //const q = this.value;
+        const q = input.value;
+        //breakpoint;
+        if (q.length < 3) {
+            sugerenciasDiv.innerHTML = '';
+            return;
+        }
+
+        fetch(`/autocompleteUsuario?q=${encodeURIComponent(q)}`)
+            .then(res => res.json())
+            .then(data => {
+                sugerenciasDiv.innerHTML = '';
+                data.forEach(item => {
+                    const div = document.createElement('div');
+                    div.textContent = item.nombres;
+                    div.addEventListener('click', function() {
+                        input.value = item.nombres;
+                        inputId.value = item.id;
+                        sugerenciasDiv.innerHTML = '';
+                    });
+                    sugerenciasDiv.appendChild(div);
+                });
+            });
+        //});
+
+        // Oculta sugerencias si se hace clic fuera
+        document.addEventListener('click', function(e) {
+            if (!sugerenciasDiv.contains(e.target) && e.target !== input) {
+                sugerenciasDiv.innerHTML = '';
+            }
+        });
+    }
+
+    function autocompleteLibro(){        
+        const input = document.getElementById('nombre_libro');
+        const sugerenciasDiv = document.getElementById('sugerenciasLibro');
+        const inputId = document.getElementById('id_libro');
+
+        //input.addEventListener('input', function() {
+        //const q = this.value;
+        const q = input.value;
+        if (q.length < 3) {
+            sugerenciasDiv.innerHTML = '';
+            return;
+        }
+
+        fetch(`/autocompleteLibro?q=${encodeURIComponent(q)}`)
+            .then(res => res.json())
+            .then(data => {
+                sugerenciasDiv.innerHTML = '';
+                data.forEach(item => {
+                    const div = document.createElement('div');
+                    div.textContent = item.nombre_libro;
+                    div.addEventListener('click', function() {
+                        input.value = item.nombre_libro;
+                        inputId.value = item.id;
+                        sugerenciasDiv.innerHTML = '';
+                    });
+                    sugerenciasDiv.appendChild(div);
+                });
+            });
+        //});
+
+        // Oculta sugerencias si se hace clic fuera
+        document.addEventListener('click', function(e) {
+            if (!sugerenciasDiv.contains(e.target) && e.target !== input) {
+                sugerenciasDiv.innerHTML = '';
+            }
+        });
+    }
+
+</script>
+
 
